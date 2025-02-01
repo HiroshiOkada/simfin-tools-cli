@@ -35,6 +35,15 @@ def format_price(value):
     except (ValueError, TypeError):
         return str(value)
 
+def format_date(value):
+    """Format date without time component"""
+    if pd.isna(value):
+        return ""
+    try:
+        return pd.to_datetime(value).strftime('%Y-%m-%d')
+    except (ValueError, TypeError):
+        return str(value)
+
 def dataframe_to_markdown(df, title, is_price_data=False):
     """Convert DataFrame to Markdown table with proper formatting"""
     # Get SimFinId from the first row (it's the same for all rows)
@@ -70,7 +79,7 @@ def dataframe_to_markdown(df, title, is_price_data=False):
     # Create alignment row (right-align all numeric columns)
     alignments = []
     for col in headers:
-        if col in ['Report Date', 'Date', 'Fiscal Year', 'Fiscal Period', 'Currency']:
+        if col in ['Report Date', 'Date', 'Fiscal Year', 'Fiscal Period', 'Currency', 'Publish Date', 'Restated Date']:
             alignments.append(":-")  # Left align
         else:
             alignments.append("-:")  # Right align
@@ -84,17 +93,27 @@ def dataframe_to_markdown(df, title, is_price_data=False):
         else:
             index_values = [str(idx)]
         
+        # Format index values (they might be dates)
+        formatted_index_values = []
+        for i, value in enumerate(index_values):
+            if df_copy.index.names[i] in ['Report Date', 'Date']:
+                formatted_index_values.append(format_date(value))
+            else:
+                formatted_index_values.append(value)
+        
         # Format values
         formatted_values = []
         for col in df_copy.columns:
             value = row[col]
-            if is_price_data:
+            if col in ['Report Date', 'Date', 'Publish Date', 'Restated Date']:
+                formatted_values.append(format_date(value))
+            elif is_price_data and col in ['Close', 'Adj. Close']:
                 formatted_values.append(format_price(value))
             else:
                 formatted_values.append(format_number(value))
         
         # Combine index and values
-        row_values = index_values + formatted_values
+        row_values = formatted_index_values + formatted_values
         md.append("| " + " | ".join(row_values) + " |")
     
     md.append("")  # Add blank line after table
