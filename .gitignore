@@ -1,3 +1,5 @@
-.env
-/venv
-/simfin_data
+/*
+!.gitignore
+!requirements.txt
+!sfin.py
+!test.py
