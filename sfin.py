@@ -22,6 +22,7 @@ def main():
         print("Subcommands:")
         print("  help    Show this help message")
         print("  income  Retrieve annual income statement data for a given ticker")
+        print("  list    Retrieve list of companies; if parameter provided, only those whose names contain the search term (case-insensitive)")
         sys.exit(0)
     elif cmd == "income":
         if len(sys.argv) < 3:
