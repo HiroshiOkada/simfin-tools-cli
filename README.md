@@ -49,48 +49,80 @@ List all companies or search for specific ones:
 ### Full Year Data
 Retrieve annual financial data:
 ```bash
+# CSV output (default)
 ./sfin.py fy AAPL
+
+# Markdown output
+./sfin.py --md fy AAPL
 ```
-This will create the following files:
-- `AAPL_pl.csv`: Annual income statements
-- `AAPL_bs.csv`: Annual balance sheets
-- `AAPL_cf.csv`: Annual cash flow statements
-- `AAPL_shares.csv`: Annual shares data
-- `AAPL_price.csv`: Stock prices on fiscal year end dates
+This will create either:
+- CSV files:
+  - `AAPL_pl.csv`: Annual income statements
+  - `AAPL_bs.csv`: Annual balance sheets
+  - `AAPL_cf.csv`: Annual cash flow statements
+  - `AAPL_shares.csv`: Annual shares data
+  - `AAPL_price.csv`: Stock prices on fiscal year end dates
+- Or a single Markdown file:
+  - `AAPL.md`: All data in Markdown tables
 
 ### Quarterly Data
 Retrieve quarterly financial data:
 ```bash
+# CSV output (default)
 ./sfin.py q AAPL
+
+# Markdown output
+./sfin.py --md q AAPL
 ```
-This will create the following files:
-- `AAPL_pl_q1234.csv`: Quarterly income statements
-- `AAPL_bs_q1234.csv`: Quarterly balance sheets
-- `AAPL_cf_q1234.csv`: Quarterly cash flow statements
-- `AAPL_shares_q1234.csv`: Quarterly shares data
-- `AAPL_price_q1234.csv`: Stock prices on fiscal quarter end dates
+This will create either:
+- CSV files:
+  - `AAPL_pl_q1234.csv`: Quarterly income statements
+  - `AAPL_bs_q1234.csv`: Quarterly balance sheets
+  - `AAPL_cf_q1234.csv`: Quarterly cash flow statements
+  - `AAPL_shares_q1234.csv`: Quarterly shares data
+  - `AAPL_price_q1234.csv`: Stock prices on fiscal quarter end dates
+- Or a single Markdown file:
+  - `AAPL_q1234.md`: All data in Markdown tables
 
 ### Trailing Twelve Months (TTM) Data
 Retrieve trailing twelve months financial data:
 ```bash
+# CSV output (default)
 ./sfin.py ttm AAPL
+
+# Markdown output
+./sfin.py --md ttm AAPL
 ```
-This will create the following files:
-- `AAPL_pl_ttm.csv`: TTM income statements
-- `AAPL_bs_ttm.csv`: TTM balance sheets
-- `AAPL_cf_ttm.csv`: TTM cash flow statements
-- `AAPL_shares_ttm.csv`: TTM shares data
-- `AAPL_price_ttm.csv`: Stock prices on TTM dates
+This will create either:
+- CSV files:
+  - `AAPL_pl_ttm.csv`: TTM income statements
+  - `AAPL_bs_ttm.csv`: TTM balance sheets
+  - `AAPL_cf_ttm.csv`: TTM cash flow statements
+  - `AAPL_shares_ttm.csv`: TTM shares data
+  - `AAPL_price_ttm.csv`: Stock prices on TTM dates
+- Or a single Markdown file:
+  - `AAPL_ttm.md`: All data in Markdown tables
 
-## Output Files
+## Output Formats
 
-All output files are in CSV format with the following characteristics:
+### CSV Files
 - Comma-separated values
 - Text fields are quoted
 - Numeric fields are not quoted
 - Dates are in YYYY-MM-DD format
 - Numbers are formatted with 2 decimal places
 - UTF-8 encoding
+
+### Markdown Files
+- Single file containing all data
+- Each dataset in its own section with headers
+- Ticker and SimFinId in section headers
+- Numbers formatted with:
+  - Thousands separators for accounting values (e.g., 1,234,567)
+  - 3 decimal places for price values (e.g., 123.456)
+- Tables aligned for readability:
+  - Left-aligned: Report Date, Date, Fiscal Year, Fiscal Period, Currency
+  - Right-aligned: All numeric columns
 
 ## Environment Variables
 
