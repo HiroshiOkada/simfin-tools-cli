@@ -41,6 +41,7 @@ def main():
         sf.set_data_dir('simfin_data')
         try:
             companies = sf.load_companies()
+            companies.reset_index(inplace=True)
             search_term = sys.argv[2].lower() if len(sys.argv) > 2 else ""
             if search_term:
                 companies = companies[companies['Name'].str.lower().str.contains(search_term)]
