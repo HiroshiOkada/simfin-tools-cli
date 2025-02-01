@@ -46,11 +46,20 @@ def dataframe_to_markdown(df, title, is_price_data=False):
         md[0] += f" (SimFinId: {simfin_id})"
     md.append("")
     
-    # Get index names excluding Ticker and SimFinId
-    index_names = [name for name in df.index.names if name not in ['Ticker', 'SimFinId']]
+    # Create a copy of the DataFrame without Ticker and SimFinId in the index
+    df_copy = df.copy()
+    if isinstance(df_copy.index, pd.MultiIndex):
+        # Get index names excluding Ticker and SimFinId
+        index_names = [name for name in df_copy.index.names if name not in ['Ticker', 'SimFinId']]
+        # Reset index to get all columns, then set only desired columns back as index
+        df_copy = df_copy.reset_index()
+        if index_names:
+            df_copy = df_copy.set_index(index_names)
     
     # Create header row
-    headers = index_names + list(df.columns)
+    headers = (df_copy.index.names if isinstance(df_copy.index, pd.MultiIndex) else [df_copy.index.name])
+    headers = [h for h in headers if h is not None]  # Remove None values
+    headers.extend(df_copy.columns)
     md.append("| " + " | ".join(headers) + " |")
     
     # Create alignment row (right-align all numeric columns)
@@ -63,16 +72,16 @@ def dataframe_to_markdown(df, title, is_price_data=False):
     md.append("| " + " | ".join(alignments) + " |")
     
     # Create data rows
-    for idx, row in df.iterrows():
-        # Get index values excluding Ticker and SimFinId
+    for idx, row in df_copy.iterrows():
+        # Get index values
         if isinstance(idx, tuple):
-            index_values = [str(v) for i, v in enumerate(idx) if df.index.names[i] not in ['Ticker', 'SimFinId']]
+            index_values = [str(v) for v in idx]
         else:
             index_values = [str(idx)]
         
         # Format values
         formatted_values = []
-        for col in df.columns:
+        for col in df_copy.columns:
             value = row[col]
             if is_price_data:
                 formatted_values.append(format_price(value))
