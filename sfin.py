@@ -53,8 +53,10 @@ def dataframe_to_markdown(df, title, is_price_data=False):
         index_names = [name for name in df_copy.index.names if name not in ['Ticker', 'SimFinId']]
         # Reset index to get all columns
         df_copy = df_copy.reset_index()
-        # Drop Ticker and SimFinId columns
-        df_copy = df_copy.drop(['Ticker', 'SimFinId'], axis=1)
+        # Drop Ticker and SimFinId columns if they exist
+        for col in ['Ticker', 'SimFinId']:
+            if col in df_copy.columns:
+                df_copy = df_copy.drop(col, axis=1)
         # Set remaining index columns back
         if index_names:
             df_copy = df_copy.set_index(index_names)
