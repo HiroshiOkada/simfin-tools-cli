@@ -43,7 +43,9 @@ def main():
             companies = sf.load_companies()
             search_term = sys.argv[2].lower() if len(sys.argv) > 2 else ""
             if search_term:
-                companies = companies[companies.index.str.lower().str.contains(search_term)]
+                # Handle NaN values in the search
+                mask = companies.index.str.lower().str.contains(search_term, na=False)
+                companies = companies[mask]
             if companies.empty:
                 print(f"No companies found matching '{search_term}'")
             else:
