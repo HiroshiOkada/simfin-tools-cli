@@ -11,6 +11,9 @@ sf.set_data_dir('simfin_data')
 # Load companies and inspect the data
 companies = sf.load_companies()
 print("Type of companies:", type(companies))
-print("\nFirst few items:")
-for name, ticker in list(companies.items())[:5]:
-    print(f"Name: {name}, Ticker: {ticker}")
+print("\nColumns in DataFrame:")
+print(companies.columns.tolist())
+print("\nFirst few rows:")
+print(companies.head())
+print("\nShape of DataFrame:")
+print(companies.shape)
