@@ -15,6 +15,26 @@ import argparse
 from dotenv import load_dotenv
 load_dotenv()
 
+def format_number(value):
+    """Format number with thousands separator for accounting values"""
+    if pd.isna(value):
+        return ""
+    try:
+        # Convert to integer first to remove decimal places
+        num = int(float(value))
+        return f"{num:,}"
+    except (ValueError, TypeError):
+        return str(value)
+
+def format_price(value):
+    """Format price with 3 decimal places"""
+    if pd.isna(value):
+        return ""
+    try:
+        return f"{float(value):.3f}"
+    except (ValueError, TypeError):
+        return str(value)
+
 def save_dataframe(df, filename, index=True):
     """Helper function to save dataframes with consistent formatting"""
     df.to_csv(filename, 
