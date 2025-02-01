@@ -35,6 +35,57 @@ def format_price(value):
     except (ValueError, TypeError):
         return str(value)
 
+def dataframe_to_markdown(df, title, is_price_data=False):
+    """Convert DataFrame to Markdown table with proper formatting"""
+    # Get SimFinId from the first row (it's the same for all rows)
+    simfin_id = df.index.get_level_values('SimFinId')[0] if 'SimFinId' in df.index.names else None
+    
+    # Create title with SimFinId if available
+    md = [f"## {title}"]
+    if simfin_id is not None:
+        md[0] += f" (SimFinId: {simfin_id})"
+    md.append("")
+    
+    # Get index names excluding Ticker and SimFinId
+    index_names = [name for name in df.index.names if name not in ['Ticker', 'SimFinId']]
+    
+    # Create header row
+    headers = index_names + list(df.columns)
+    md.append("| " + " | ".join(headers) + " |")
+    
+    # Create alignment row (right-align all numeric columns)
+    alignments = []
+    for col in headers:
+        if col in ['Report Date', 'Date', 'Fiscal Year', 'Fiscal Period', 'Currency']:
+            alignments.append(":-")  # Left align
+        else:
+            alignments.append("-:")  # Right align
+    md.append("| " + " | ".join(alignments) + " |")
+    
+    # Create data rows
+    for idx, row in df.iterrows():
+        # Get index values excluding Ticker and SimFinId
+        if isinstance(idx, tuple):
+            index_values = [str(v) for i, v in enumerate(idx) if df.index.names[i] not in ['Ticker', 'SimFinId']]
+        else:
+            index_values = [str(idx)]
+        
+        # Format values
+        formatted_values = []
+        for col in df.columns:
+            value = row[col]
+            if is_price_data:
+                formatted_values.append(format_price(value))
+            else:
+                formatted_values.append(format_number(value))
+        
+        # Combine index and values
+        row_values = index_values + formatted_values
+        md.append("| " + " | ".join(row_values) + " |")
+    
+    md.append("")  # Add blank line after table
+    return "\n".join(md)
+
 def save_dataframe(df, filename, index=True):
     """Helper function to save dataframes with consistent formatting"""
     df.to_csv(filename, 
@@ -118,6 +169,12 @@ def main():
         sf.set_data_dir('simfin_data')
         try:
             saved_files = []
+            markdown_content = []
+            
+            # Add title for markdown output
+            if args.md:
+                markdown_content.append(f"# {ticker}")
+                markdown_content.append("")
             
             try:
                 # Load and save P&L data
@@ -129,7 +186,10 @@ def main():
                     # Clean up column names
                     pl.columns = [col.strip() for col in pl.columns]
                     pl.index.names = [name.strip() for name in pl.index.names]
-                    save_dataframe(pl, f"{ticker}_pl{suffix}.csv")
+                    if args.md:
+                        markdown_content.append(dataframe_to_markdown(pl, "Income Statement"))
+                    else:
+                        save_dataframe(pl, f"{ticker}_pl{suffix}.csv")
                     saved_files.append("pl")
             except Exception as e:
                 print(f"Warning: Could not load P&L data: {str(e)}")
@@ -142,7 +202,10 @@ def main():
                     bs = bs.round(2)
                     bs.columns = [col.strip() for col in bs.columns]
                     bs.index.names = [name.strip() for name in bs.index.names]
-                    save_dataframe(bs, f"{ticker}_bs{suffix}.csv")
+                    if args.md:
+                        markdown_content.append(dataframe_to_markdown(bs, "Balance Sheet"))
+                    else:
+                        save_dataframe(bs, f"{ticker}_bs{suffix}.csv")
                     saved_files.append("bs")
             except Exception as e:
                 print(f"Warning: Could not load Balance Sheet data: {str(e)}")
@@ -155,7 +218,10 @@ def main():
                     cf = cf.round(2)
                     cf.columns = [col.strip() for col in cf.columns]
                     cf.index.names = [name.strip() for name in cf.index.names]
-                    save_dataframe(cf, f"{ticker}_cf{suffix}.csv")
+                    if args.md:
+                        markdown_content.append(dataframe_to_markdown(cf, "Cash Flow Statement"))
+                    else:
+                        save_dataframe(cf, f"{ticker}_cf{suffix}.csv")
                     saved_files.append("cf")
             except Exception as e:
                 print(f"Warning: Could not load Cash Flow data: {str(e)}")
@@ -168,7 +234,10 @@ def main():
                     derived = derived.round(2)
                     derived.columns = [col.strip() for col in derived.columns]
                     derived.index.names = [name.strip() for name in derived.index.names]
-                    save_dataframe(derived, f"{ticker}_derived{suffix}.csv")
+                    if args.md:
+                        markdown_content.append(dataframe_to_markdown(derived, "Derived Metrics"))
+                    else:
+                        save_dataframe(derived, f"{ticker}_derived{suffix}.csv")
                     saved_files.append("derived")
             except Exception as e:
                 print(f"Warning: Could not load Derived data: {str(e)}")
@@ -184,7 +253,10 @@ def main():
                         shares_data = shares_data.round(2)
                         shares_data.columns = [col.strip() for col in shares_data.columns]
                         shares_data.index.names = [name.strip() for name in shares_data.index.names]
-                        save_dataframe(shares_data, f"{ticker}_shares{suffix}.csv")
+                        if args.md:
+                            markdown_content.append(dataframe_to_markdown(shares_data, "Share Data"))
+                        else:
+                            save_dataframe(shares_data, f"{ticker}_shares{suffix}.csv")
                         saved_files.append("shares")
             except Exception as e:
                 print(f"Warning: Could not extract shares data: {str(e)}")
@@ -221,7 +293,10 @@ def main():
                                 price_data = price_data.round(2)
                                 price_data.columns = [col.strip() for col in price_data.columns]
                                 price_data.index.names = [name.strip() for name in price_data.index.names]
-                                save_dataframe(price_data, f"{ticker}_price{suffix}.csv")
+                                if args.md:
+                                    markdown_content.append(dataframe_to_markdown(price_data, "Price Data", is_price_data=True))
+                                else:
+                                    save_dataframe(price_data, f"{ticker}_price{suffix}.csv")
                                 saved_files.append("price")
             except Exception as e:
                 print(f"Warning: Could not load Price data: {str(e)}")
@@ -230,7 +305,14 @@ def main():
                 print(f"No data could be saved for {ticker}")
                 return
             else:
-                print(f"Successfully saved the following datasets for {ticker}: {', '.join(saved_files)}")
+                if args.md:
+                    # Save all tables to a single markdown file
+                    md_suffix = {'fy': '', 'q': '_q1234', 'ttm': '_ttm'}[args.command]
+                    with open(f"{ticker}{md_suffix}.md", 'w', encoding='utf-8') as f:
+                        f.write("\n".join(markdown_content))
+                    print(f"Successfully saved markdown file: {ticker}{md_suffix}.md")
+                else:
+                    print(f"Successfully saved the following datasets for {ticker}: {', '.join(saved_files)}")
 
         except Exception as e:
             print(f"Error retrieving data for {ticker}: {e}")
