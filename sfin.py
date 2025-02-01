@@ -40,17 +40,21 @@ def main():
         sf.set_api_key(os.environ["SIMFIN_API_KEY"])
         sf.set_data_dir('simfin_data')
         try:
-            companies = sf.load_companies()
+            # Load companies data and convert to DataFrame with proper columns
+            companies_dict = sf.load_companies()
+            import pandas as pd
+            companies = pd.DataFrame.from_dict(companies_dict, orient='index', columns=['Ticker'])
+            companies['Name'] = companies.index
+            
             search_term = sys.argv[2].lower() if len(sys.argv) > 2 else ""
             if search_term:
                 # Handle NaN values in the search
-                mask = companies.index.str.lower().str.contains(search_term, na=False)
+                mask = companies['Name'].str.lower().str.contains(search_term, na=False)
                 companies = companies[mask]
             if companies.empty:
                 print(f"No companies found matching '{search_term}'")
             else:
-                # Display index (company name) and ticker symbol
-                print(companies[['Ticker']].assign(Name=companies.index))
+                print(companies[['Ticker', 'Name']])
         except Exception as e:
             print(f"Error retrieving companies list: {e}")
     else:
