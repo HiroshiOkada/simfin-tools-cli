@@ -49,7 +49,7 @@ def main():
             search_term = sys.argv[2].lower() if len(sys.argv) > 2 else ""
             if search_term:
                 # Handle NaN values in the search
-                mask = companies['Name'].str.lower().str.contains(search_term, na=False)
+                mask = companies['Name'].astype(str).str.lower().str.contains(search_term, na=False)
                 companies = companies[mask]
             if companies.empty:
                 print(f"No companies found matching '{search_term}'")
