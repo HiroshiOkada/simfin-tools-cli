@@ -41,14 +41,14 @@ def main():
         sf.set_data_dir('simfin_data')
         try:
             companies = sf.load_companies()
-            companies.reset_index(inplace=True)
             search_term = sys.argv[2].lower() if len(sys.argv) > 2 else ""
             if search_term:
-                companies = companies[companies['Name'].str.lower().str.contains(search_term)]
+                companies = companies[companies.index.str.lower().str.contains(search_term)]
             if companies.empty:
                 print(f"No companies found matching '{search_term}'")
             else:
-                print(companies[['Ticker', 'Name']])
+                # Display index (company name) and ticker symbol
+                print(companies[['Ticker']].assign(Name=companies.index))
         except Exception as e:
             print(f"Error retrieving companies list: {e}")
     else:
