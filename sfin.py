@@ -6,6 +6,9 @@ Usage: python simfin_cli.py AAPL
 """
 
 import simfin as sf
+import os
+from dotenv import load_dotenv
+load_dotenv()
 import argparse
 
 def main():
@@ -25,7 +28,7 @@ def main():
             print("Usage: ./sfin.py income <ticker>")
             sys.exit(1)
         ticker = sys.argv[2]
-        sf.set_api_key('free')  # free API key provided by SimFin
+        sf.set_api_key(os.environ["SIMFIN_API_KEY"])  # API key loaded from .env file
         sf.set_data_dir('simfin_data')
         try:
             df = sf.get_income(ticker=ticker, variant='annual')
