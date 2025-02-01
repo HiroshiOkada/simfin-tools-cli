@@ -44,7 +44,10 @@ def main():
             search_term = sys.argv[2].lower() if len(sys.argv) > 2 else ""
             if search_term:
                 companies = companies[companies['Name'].str.lower().str.contains(search_term)]
-            print(companies[['Ticker', 'Name']])
+            if companies.empty:
+                print(f"No companies found matching '{search_term}'")
+            else:
+                print(companies[['Ticker', 'Name']])
         except Exception as e:
             print(f"Error retrieving companies list: {e}")
     else:
