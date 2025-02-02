@@ -16,8 +16,18 @@ import os
 import pandas as pd
 import csv
 import argparse
+import warnings
+from contextlib import contextmanager
 from dotenv import load_dotenv
 load_dotenv()
+
+@contextmanager
+def suppress_simfin_warnings():
+    """一時的にsimfinライブラリの特定の警告のみを抑制するコンテキストマネージャー"""
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=FutureWarning,
+                              message='.*date_parser.*')
+        yield
 
 def format_number(value):
     """Format number with thousands separator for accounting values"""
@@ -216,7 +226,8 @@ def main():
             
             try:
                 # Load and save P&L data
-                pl = sf.load_income(variant=variant)
+                with suppress_simfin_warnings():
+                    pl = sf.load_income(variant=variant)
                 pl = pl[pl.index.get_level_values('Ticker') == ticker]
                 if not pl.empty:
                     # Format numbers without scientific notation
@@ -234,7 +245,8 @@ def main():
 
             try:
                 # Load and save Balance Sheet data
-                bs = sf.load_balance(variant=variant)
+                with suppress_simfin_warnings():
+                    bs = sf.load_balance(variant=variant)
                 bs = bs[bs.index.get_level_values('Ticker') == ticker]
                 if not bs.empty:
                     bs = bs.round(2)
@@ -250,7 +262,8 @@ def main():
 
             try:
                 # Load and save Cash Flow data
-                cf = sf.load_cashflow(variant=variant)
+                with suppress_simfin_warnings():
+                    cf = sf.load_cashflow(variant=variant)
                 cf = cf[cf.index.get_level_values('Ticker') == ticker]
                 if not cf.empty:
                     cf = cf.round(2)
@@ -309,7 +322,8 @@ def main():
                     fiscal_dates = pl.index.get_level_values('Report Date').unique()
                     
                     # Load daily share prices
-                    prices = sf.load_shareprices(variant='daily')
+                    with suppress_simfin_warnings():
+                        prices = sf.load_shareprices(variant='daily')
                     prices = prices[prices.index.get_level_values('Ticker') == ticker]
                     
                     if not prices.empty:
