@@ -9,19 +9,25 @@ A command line tool to retrieve financial data using SimFin API. This tool provi
 
 ## Installation
 
+### Option 1: Install from GitHub (recommended)
+```bash
+pip install git+https://github.com/hiroshi-maybe/simfin-tools-cli.git
+```
+
+### Option 2: Install from source
 1. Clone the repository:
 ```bash
-git clone [repository-url]
-cd simfin-tools
+git clone https://github.com/hiroshi-maybe/simfin-tools-cli.git
+cd simfin-tools-cli
 ```
 
-2. Install dependencies:
+2. Install the package:
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
-3. Set up your SimFin API key:
-Create a `.env` file in the project root and add your SimFin API key:
+### Set up your SimFin API key
+Create a `.env` file in your working directory and add your SimFin API key:
 ```bash
 SIMFIN_API_KEY=your-api-key-here
 ```
@@ -33,27 +39,27 @@ The tool provides several subcommands to retrieve different types of financial d
 ### Help
 Show available subcommands:
 ```bash
-./sfin.py help
+sfin help
 ```
 
 ### List Companies
 List all companies or search for specific ones:
 ```bash
 # List all companies
-./sfin.py list
+sfin list
 
 # Search for companies (case-insensitive)
-./sfin.py list apple
+sfin list apple
 ```
 
 ### Full Year Data
 Retrieve annual financial data:
 ```bash
 # CSV output (default)
-./sfin.py fy AAPL
+sfin fy AAPL
 
 # Markdown output
-./sfin.py --md fy AAPL
+sfin --md fy AAPL
 ```
 This will create either:
 - CSV files:
@@ -69,10 +75,10 @@ This will create either:
 Retrieve quarterly financial data:
 ```bash
 # CSV output (default)
-./sfin.py q AAPL
+sfin q AAPL
 
 # Markdown output
-./sfin.py --md q AAPL
+sfin --md q AAPL
 ```
 This will create either:
 - CSV files:
@@ -88,10 +94,10 @@ This will create either:
 Retrieve trailing twelve months financial data:
 ```bash
 # CSV output (default)
-./sfin.py ttm AAPL
+sfin ttm AAPL
 
 # Markdown output
-./sfin.py --md ttm AAPL
+sfin --md ttm AAPL
 ```
 This will create either:
 - CSV files:
@@ -138,7 +144,7 @@ The tool uses a local cache directory (`simfin_data/`) to store downloaded datas
 - Persists data between runs
 
 The cache is automatically:
-- Created in the tool's directory if it doesn't exist
+- Created in the current working directory if it doesn't exist
 - Updated when new data is available from SimFin
 - Reused when the data is still current
 
