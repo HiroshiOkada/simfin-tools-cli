@@ -129,3 +129,17 @@ This will create either:
 - `SIMFIN_API_KEY`: Your SimFin API key (required)
   - Sign up at [SimFin](https://simfin.com/)
   - Get your API key from your account settings
+
+## Cache Directory
+
+The tool uses a local cache directory (`simfin_data/`) to store downloaded datasets. This:
+- Reduces API calls to SimFin servers
+- Improves performance for subsequent queries
+- Persists data between runs
+
+The cache is automatically:
+- Created in the tool's directory if it doesn't exist
+- Updated when new data is available from SimFin
+- Reused when the data is still current
+
+You can safely delete the `simfin_data/` directory if you want to force a fresh download of all datasets.
