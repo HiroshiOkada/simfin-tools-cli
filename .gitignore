@@ -4,3 +4,8 @@
 !sfin.py
 !test.py
 !README.md
+!setup.py
+!simfin_tools/
+!simfin_tools/simfin_tools/
+!simfin_tools/simfin_tools/__init__.py
+!simfin_tools/simfin_tools/cli.py

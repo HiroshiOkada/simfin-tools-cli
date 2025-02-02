@@ -11,13 +11,13 @@ A command line tool to retrieve financial data using SimFin API. This tool provi
 
 ### Option 1: Install from GitHub (recommended)
 ```bash
-pip install git+https://github.com/hiroshi-maybe/simfin-tools-cli.git
+pip install git+https://github.com/HiroshiOkada/simfin-tools-cli.git
 ```
 
 ### Option 2: Install from source
 1. Clone the repository:
 ```bash
-git clone https://github.com/hiroshi-maybe/simfin-tools-cli.git
+git clone https://github.com/HiroshiOkada/simfin-tools-cli.git
 cd simfin-tools-cli
 ```
 
