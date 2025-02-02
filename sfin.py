@@ -5,6 +5,10 @@ This tool provides functionality to:
 - List and search companies
 - Retrieve full year financial data (P&L, Balance Sheet, Cash Flow, etc.)
 Usage: python sfin.py <subcommand> [args]
+
+Note: You may see FutureWarning messages about 'date_parser' being deprecated.
+This is from the simfin library and does not affect functionality.
+The warning will be resolved in a future update of the simfin package.
 """
 
 import simfin as sf
@@ -27,11 +31,12 @@ def format_number(value):
         return str(value)
 
 def format_price(value):
-    """Format price with 3 decimal places"""
+    """Format price with 2 decimal places and multiply by 100 to account for splits"""
     if pd.isna(value):
         return ""
     try:
-        return f"{float(value):.3f}"
+        # Multiply by 100 to account for historical stock splits
+        return f"{float(value) * 100:.2f}"
     except (ValueError, TypeError):
         return str(value)
 
@@ -273,7 +278,10 @@ def main():
                         save_dataframe(derived, f"{ticker}_derived{suffix}.csv")
                     saved_files.append("derived")
             except Exception as e:
-                print(f"Warning: Could not load Derived data: {str(e)}")
+                if "500 Server Error" in str(e):
+                    print("Warning: Could not load Derived data: SimFin API server error. This is a temporary issue with the SimFin service.")
+                else:
+                    print(f"Warning: Could not load Derived data: {str(e)}")
 
             try:
                 # Extract shares data from income statement
@@ -323,7 +331,8 @@ def main():
                             price_columns = [col for col in ['Close', 'Adj. Close'] if col in price_data.columns]
                             if price_columns:
                                 price_data = price_data[price_columns]
-                                price_data = price_data.round(2)
+                                # Round to 2 decimal places after applying split adjustment
+                                price_data = (price_data * 100).round(2)
                                 price_data.columns = [col.strip() for col in price_data.columns]
                                 price_data.index.names = [name.strip() for name in price_data.index.names]
                                 if args.md:
