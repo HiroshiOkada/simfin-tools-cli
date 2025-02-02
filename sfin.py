@@ -264,24 +264,24 @@ def main():
             except Exception as e:
                 print(f"Warning: Could not load Cash Flow data: {str(e)}")
 
-            try:
-                # Load and save Derived data
-                derived = sf.load_derived(variant=variant)
-                derived = derived[derived.index.get_level_values('Ticker') == ticker]
-                if not derived.empty:
-                    derived = derived.round(2)
-                    derived.columns = [col.strip() for col in derived.columns]
-                    derived.index.names = [name.strip() for name in derived.index.names]
-                    if args.md:
-                        markdown_content.append(dataframe_to_markdown(derived, "Derived Metrics"))
-                    else:
-                        save_dataframe(derived, f"{ticker}_derived{suffix}.csv")
-                    saved_files.append("derived")
-            except Exception as e:
-                if "500 Server Error" in str(e):
-                    print("Warning: Could not load Derived data: SimFin API server error. This is a temporary issue with the SimFin service.")
-                else:
+            # Note: Skip derived data loading as it requires a higher tier plan
+            if False:  # Disabled derived data loading
+                try:
+                    derived = sf.load_derived(variant=variant)
+                    derived = derived[derived.index.get_level_values('Ticker') == ticker]
+                    if not derived.empty:
+                        derived = derived.round(2)
+                        derived.columns = [col.strip() for col in derived.columns]
+                        derived.index.names = [name.strip() for name in derived.index.names]
+                        if args.md:
+                            markdown_content.append(dataframe_to_markdown(derived, "Derived Metrics"))
+                        else:
+                            save_dataframe(derived, f"{ticker}_derived{suffix}.csv")
+                        saved_files.append("derived")
+                except Exception as e:
                     print(f"Warning: Could not load Derived data: {str(e)}")
+            else:
+                print("Note: Derived metrics are not available in the current plan. Please upgrade to access this feature.")
 
             try:
                 # Extract shares data from income statement
