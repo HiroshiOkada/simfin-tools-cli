@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from simfin_tools.simfin_tools import __version__
+from simfin_tools import __version__
 
 setup(
     name="simfin-tools",
@@ -18,7 +18,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'sfin=simfin_tools.simfin_tools.cli:main',
+            'sfin=simfin_tools.cli:main',
         ],
     },
     classifiers=[
