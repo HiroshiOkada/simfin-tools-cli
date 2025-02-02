@@ -11,44 +11,51 @@ This is from the simfin library and does not affect functionality.
 The warning will be resolved in a future update of the simfin package.
 """
 
-import simfin as sf
 import os
-import pandas as pd
 import csv
-import argparse
 import warnings
+import argparse
 from contextlib import contextmanager
+
+import simfin as sf
+import pandas as pd
 from dotenv import load_dotenv
+
 load_dotenv()
+
 
 @contextmanager
 def suppress_simfin_warnings():
     """一時的にsimfinライブラリの特定の警告のみを抑制するコンテキストマネージャー"""
     with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=FutureWarning,
-                              message='.*date_parser.*')
+        warnings.filterwarnings(
+            'ignore',
+            category=FutureWarning,
+            message='.*date_parser.*'
+        )
         yield
+
 
 def format_number(value):
     """Format number with thousands separator for accounting values"""
     if pd.isna(value):
         return ""
     try:
-        # Convert to integer first to remove decimal places
         num = int(float(value))
         return f"{num:,}"
     except (ValueError, TypeError):
         return str(value)
+
 
 def format_price(value):
     """Format price with 2 decimal places and multiply by 100 to account for splits"""
     if pd.isna(value):
         return ""
     try:
-        # Multiply by 100 to account for historical stock splits
         return f"{float(value) * 100:.2f}"
     except (ValueError, TypeError):
         return str(value)
+
 
 def format_date(value):
     """Format date without time component"""
@@ -59,39 +66,33 @@ def format_date(value):
     except (ValueError, TypeError):
         return str(value)
 
+
 def dataframe_to_markdown(df, title, is_price_data=False):
     """Convert DataFrame to Markdown table with proper formatting"""
-    # Get SimFinId from the first row (it's the same for all rows)
-    simfin_id = df.index.get_level_values('SimFinId')[0] if 'SimFinId' in df.index.names else None
+    simfin_id = (
+        df.index.get_level_values('SimFinId')[0]
+        if 'SimFinId' in df.index.names else None
+    )
     
-    # Create title with SimFinId if available
-    md = [f"## {title}"]
-    if simfin_id is not None:
-        md[0] += f" (SimFinId: {simfin_id})"
+    md = [f"## {title}" + (f" (SimFinId: {simfin_id})" if simfin_id is not None else "")]
     md.append("")
     
-    # Create a copy of the DataFrame without Ticker and SimFinId in the index
+    # DataFrameのインデックスから Ticker, SimFinId を除いたコピーを作成
     df_copy = df.copy()
     if isinstance(df_copy.index, pd.MultiIndex):
-        # Get index names excluding Ticker and SimFinId
         index_names = [name for name in df_copy.index.names if name not in ['Ticker', 'SimFinId']]
-        # Reset index to get all columns
         df_copy = df_copy.reset_index()
-        # Drop Ticker and SimFinId columns if they exist
         for col in ['Ticker', 'SimFinId']:
             if col in df_copy.columns:
                 df_copy = df_copy.drop(col, axis=1)
-        # Set remaining index columns back
         if index_names:
             df_copy = df_copy.set_index(index_names)
     
-    # Create header row
     headers = (df_copy.index.names if isinstance(df_copy.index, pd.MultiIndex) else [df_copy.index.name])
-    headers = [h for h in headers if h is not None]  # Remove None values
+    headers = [h for h in headers if h is not None]
     headers.extend(df_copy.columns)
     md.append("| " + " | ".join(headers) + " |")
     
-    # Create alignment row (right-align all numeric columns)
     alignments = []
     for col in headers:
         if col in ['Report Date', 'Date', 'Fiscal Year', 'Fiscal Period', 'Currency', 'Publish Date', 'Restated Date']:
@@ -100,15 +101,12 @@ def dataframe_to_markdown(df, title, is_price_data=False):
             alignments.append("-:")  # Right align
     md.append("| " + " | ".join(alignments) + " |")
     
-    # Create data rows
     for idx, row in df_copy.iterrows():
-        # Get index values
         if isinstance(idx, tuple):
             index_values = [str(v) for v in idx]
         else:
             index_values = [str(idx)]
         
-        # Format index values (they might be dates)
         formatted_index_values = []
         for i, value in enumerate(index_values):
             if df_copy.index.names[i] in ['Report Date', 'Date']:
@@ -116,7 +114,6 @@ def dataframe_to_markdown(df, title, is_price_data=False):
             else:
                 formatted_index_values.append(value)
         
-        # Format values
         formatted_values = []
         for col in df_copy.columns:
             value = row[col]
@@ -127,22 +124,25 @@ def dataframe_to_markdown(df, title, is_price_data=False):
             else:
                 formatted_values.append(format_number(value))
         
-        # Combine index and values
         row_values = formatted_index_values + formatted_values
         md.append("| " + " | ".join(row_values) + " |")
     
-    md.append("")  # Add blank line after table
+    md.append("")
     return "\n".join(md)
+
 
 def save_dataframe(df, filename, index=True):
     """Helper function to save dataframes with consistent formatting"""
-    df.to_csv(filename, 
-              sep=',',
-              index=index,
-              float_format='%.2f',
-              encoding='utf-8',
-              quoting=csv.QUOTE_NONNUMERIC,
-              doublequote=True)
+    df.to_csv(
+        filename,
+        sep=',',
+        index=index,
+        float_format='%.2f',
+        encoding='utf-8',
+        quoting=csv.QUOTE_NONNUMERIC,
+        doublequote=True
+    )
+
 
 def create_parser():
     """Create argument parser"""
@@ -154,26 +154,108 @@ def create_parser():
     
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     
-    # help command
-    help_parser = subparsers.add_parser('help', help='Show this help message')
+    subparsers.add_parser('help', help='Show this help message')
     
-    # list command
     list_parser = subparsers.add_parser('list', help='List or search companies')
     list_parser.add_argument('search_term', nargs='?', default='', help='Search term for company names')
     
-    # fy command
     fy_parser = subparsers.add_parser('fy', help='Retrieve full year financial data')
     fy_parser.add_argument('ticker', help='Company ticker symbol')
     
-    # q command
     q_parser = subparsers.add_parser('q', help='Retrieve quarterly financial data')
     q_parser.add_argument('ticker', help='Company ticker symbol')
     
-    # ttm command
     ttm_parser = subparsers.add_parser('ttm', help='Retrieve trailing twelve months financial data')
     ttm_parser.add_argument('ticker', help='Company ticker symbol')
     
     return parser
+
+
+def setup_simfin():
+    """Set API key and data directory for simfin."""
+    sf.set_api_key(os.environ["SIMFIN_API_KEY"])
+    sf.set_data_dir('simfin_data')
+
+
+def process_statement(load_func, ticker, variant, suffix, title, file_tag, markdown, md_list, saved_files):
+    """
+    共通の財務データの取得・整形・出力処理。
+    load_func: simfinのデータ読み込み関数
+    """
+    try:
+        with suppress_simfin_warnings():
+            df = load_func(variant=variant)
+        df = df[df.index.get_level_values('Ticker') == ticker]
+        if df.empty:
+            return None
+        df = df.round(2)
+        df.columns = [col.strip() for col in df.columns]
+        df.index.names = [name.strip() for name in df.index.names]
+        if markdown:
+            md_list.append(dataframe_to_markdown(df, title))
+        else:
+            filename = f"{ticker}_{file_tag}{suffix}.csv"
+            save_dataframe(df, filename)
+        saved_files.append(file_tag)
+        return df
+    except Exception as e:
+        print(f"Warning: Could not load {title} data: {e}")
+        return None
+
+
+def process_shares_data(pl, ticker, suffix, markdown, md_list, saved_files):
+    """株式データの抽出と出力処理"""
+    try:
+        if pl is not None:
+            shares_cols = [col for col in pl.columns if 'Shares' in col]
+            if len(shares_cols) >= 2:
+                shares_data = pl[shares_cols[:2]]
+                shares_data.columns = ['Common Shares Outstanding', 'Weighted Average Shares']
+                shares_data = shares_data.round(2)
+                shares_data.columns = [col.strip() for col in shares_data.columns]
+                shares_data.index.names = [name.strip() for name in shares_data.index.names]
+                if markdown:
+                    md_list.append(dataframe_to_markdown(shares_data, "Share Data"))
+                else:
+                    save_dataframe(shares_data, f"{ticker}_shares{suffix}.csv")
+                saved_files.append("shares")
+    except Exception as e:
+        print(f"Warning: Could not extract shares data: {e}")
+
+
+def process_price_data(ticker, pl, suffix, markdown, md_list, saved_files):
+    """株価データの取得と出力処理"""
+    try:
+        if pl is not None:
+            fiscal_dates = pl.index.get_level_values('Report Date').unique()
+            with suppress_simfin_warnings():
+                prices = sf.load_shareprices(variant='daily')
+            prices = prices[prices.index.get_level_values('Ticker') == ticker]
+            if not prices.empty:
+                price_data_list = []
+                for date in fiscal_dates:
+                    mask = prices.index.get_level_values('Date') <= date
+                    if mask.any():
+                        closest_date = prices[mask].index.get_level_values('Date').max()
+                        price_row = prices[prices.index.get_level_values('Date') == closest_date]
+                        if not price_row.empty:
+                            price_data_list.append(price_row)
+                if price_data_list:
+                    price_data = pd.concat(price_data_list)
+                    price_columns = [col for col in ['Close', 'Adj. Close'] if col in price_data.columns]
+                    if price_columns:
+                        price_data = price_data[price_columns]
+                        price_data = (price_data * 100).round(2)
+                        price_data.columns = [col.strip() for col in price_data.columns]
+                        price_data.index.names = [name.strip() for name in price_data.index.names]
+                        if markdown:
+                            md_list.append(dataframe_to_markdown(price_data, "Price Data", is_price_data=True))
+                        else:
+                            save_dataframe(price_data, f"{ticker}_price{suffix}.csv")
+                        saved_files.append("price")
+    except Exception as e:
+        print(f"Warning: Could not load Price data: {e}")
+
 
 def main():
     parser = create_parser()
@@ -184,199 +266,78 @@ def main():
         return
     
     if args.command == 'list':
-        sf.set_api_key(os.environ["SIMFIN_API_KEY"])
-        sf.set_data_dir('simfin_data')
+        setup_simfin()
         try:
-            # Load companies data
             companies = sf.load_companies()
             search_term = args.search_term.lower()
-            
             if search_term:
-                # Handle NaN values in the search for both Company Name and Ticker
                 name_mask = companies['Company Name'].str.lower().str.contains(search_term, na=False)
                 ticker_mask = companies.index.str.lower().str.contains(search_term, na=False)
                 companies = companies[name_mask | ticker_mask]
-            
             if companies.empty:
                 print(f"No companies found matching '{search_term}'")
             else:
-                # Display results with ticker as index and company name
                 result = companies[['Company Name']].copy()
-                result.columns = ['Name']  # Rename column for display
+                result.columns = ['Name']
                 print(result)
         except Exception as e:
             print(f"Error retrieving companies list: {e}")
-            return
-    
+        return
+
     elif args.command in ['fy', 'q', 'ttm']:
         ticker = args.ticker
         variant = {'fy': 'annual', 'q': 'quarterly', 'ttm': 'ttm'}[args.command]
         suffix = {'fy': '', 'q': '_q1234', 'ttm': '_ttm'}[args.command]
         
-        sf.set_api_key(os.environ["SIMFIN_API_KEY"])
-        sf.set_data_dir('simfin_data')
+        setup_simfin()
+        saved_files = []
+        markdown_content = []
+        
+        if args.md:
+            markdown_content.append(f"# {ticker}")
+            markdown_content.append("")
+        
         try:
-            saved_files = []
-            markdown_content = []
+            # 損益計算書の取得
+            pl = process_statement(sf.load_income, ticker, variant, suffix,
+                                   "Income Statement", "pl", args.md, markdown_content, saved_files)
             
-            # Add title for markdown output
-            if args.md:
-                markdown_content.append(f"# {ticker}")
-                markdown_content.append("")
+            # 貸借対照表の取得
+            process_statement(sf.load_balance, ticker, variant, suffix,
+                              "Balance Sheet", "bs", args.md, markdown_content, saved_files)
             
-            try:
-                # Load and save P&L data
-                with suppress_simfin_warnings():
-                    pl = sf.load_income(variant=variant)
-                pl = pl[pl.index.get_level_values('Ticker') == ticker]
-                if not pl.empty:
-                    # Format numbers without scientific notation
-                    pl = pl.round(2)
-                    # Clean up column names
-                    pl.columns = [col.strip() for col in pl.columns]
-                    pl.index.names = [name.strip() for name in pl.index.names]
-                    if args.md:
-                        markdown_content.append(dataframe_to_markdown(pl, "Income Statement"))
-                    else:
-                        save_dataframe(pl, f"{ticker}_pl{suffix}.csv")
-                    saved_files.append("pl")
-            except Exception as e:
-                print(f"Warning: Could not load P&L data: {str(e)}")
-
-            try:
-                # Load and save Balance Sheet data
-                with suppress_simfin_warnings():
-                    bs = sf.load_balance(variant=variant)
-                bs = bs[bs.index.get_level_values('Ticker') == ticker]
-                if not bs.empty:
-                    bs = bs.round(2)
-                    bs.columns = [col.strip() for col in bs.columns]
-                    bs.index.names = [name.strip() for name in bs.index.names]
-                    if args.md:
-                        markdown_content.append(dataframe_to_markdown(bs, "Balance Sheet"))
-                    else:
-                        save_dataframe(bs, f"{ticker}_bs{suffix}.csv")
-                    saved_files.append("bs")
-            except Exception as e:
-                print(f"Warning: Could not load Balance Sheet data: {str(e)}")
-
-            try:
-                # Load and save Cash Flow data
-                with suppress_simfin_warnings():
-                    cf = sf.load_cashflow(variant=variant)
-                cf = cf[cf.index.get_level_values('Ticker') == ticker]
-                if not cf.empty:
-                    cf = cf.round(2)
-                    cf.columns = [col.strip() for col in cf.columns]
-                    cf.index.names = [name.strip() for name in cf.index.names]
-                    if args.md:
-                        markdown_content.append(dataframe_to_markdown(cf, "Cash Flow Statement"))
-                    else:
-                        save_dataframe(cf, f"{ticker}_cf{suffix}.csv")
-                    saved_files.append("cf")
-            except Exception as e:
-                print(f"Warning: Could not load Cash Flow data: {str(e)}")
-
-            # Note: Skip derived data loading as it requires a higher tier plan
-            if False:  # Disabled derived data loading
-                try:
-                    derived = sf.load_derived(variant=variant)
-                    derived = derived[derived.index.get_level_values('Ticker') == ticker]
-                    if not derived.empty:
-                        derived = derived.round(2)
-                        derived.columns = [col.strip() for col in derived.columns]
-                        derived.index.names = [name.strip() for name in derived.index.names]
-                        if args.md:
-                            markdown_content.append(dataframe_to_markdown(derived, "Derived Metrics"))
-                        else:
-                            save_dataframe(derived, f"{ticker}_derived{suffix}.csv")
-                        saved_files.append("derived")
-                except Exception as e:
-                    print(f"Warning: Could not load Derived data: {str(e)}")
-            else:
-                print("Note: Derived metrics are not available in the current plan. Please upgrade to access this feature.")
-
-            try:
-                # Extract shares data from income statement
-                if 'pl' in saved_files:
-                    # Get the exact column names from the P&L data that contain 'Shares'
-                    shares_cols = [col for col in pl.columns if 'Shares' in col]
-                    if len(shares_cols) >= 2:
-                        shares_data = pl[shares_cols[:2]]  # Take first two shares columns
-                        shares_data.columns = ['Common Shares Outstanding', 'Weighted Average Shares']
-                        shares_data = shares_data.round(2)
-                        shares_data.columns = [col.strip() for col in shares_data.columns]
-                        shares_data.index.names = [name.strip() for name in shares_data.index.names]
-                        if args.md:
-                            markdown_content.append(dataframe_to_markdown(shares_data, "Share Data"))
-                        else:
-                            save_dataframe(shares_data, f"{ticker}_shares{suffix}.csv")
-                        saved_files.append("shares")
-            except Exception as e:
-                print(f"Warning: Could not extract shares data: {str(e)}")
-
-            try:
-                # Load and save historical Price data
-                if 'pl' in saved_files:
-                    # Get fiscal dates from P&L data
-                    fiscal_dates = pl.index.get_level_values('Report Date').unique()
-                    
-                    # Load daily share prices
-                    with suppress_simfin_warnings():
-                        prices = sf.load_shareprices(variant='daily')
-                    prices = prices[prices.index.get_level_values('Ticker') == ticker]
-                    
-                    if not prices.empty:
-                        # Get price data for each fiscal date
-                        price_data = []
-                        for date in fiscal_dates:
-                            # Get the price on the fiscal date or the closest previous date
-                            mask = prices.index.get_level_values('Date') <= date
-                            if mask.any():
-                                closest_date = prices[mask].index.get_level_values('Date').max()
-                                price_row = prices[prices.index.get_level_values('Date') == closest_date]
-                                if not price_row.empty:
-                                    price_data.append(price_row)
-                        
-                        if price_data:
-                            # Combine all price data
-                            price_data = pd.concat(price_data)
-                            # Get available columns for price data
-                            price_columns = [col for col in ['Close', 'Adj. Close'] if col in price_data.columns]
-                            if price_columns:
-                                price_data = price_data[price_columns]
-                                # Round to 2 decimal places after applying split adjustment
-                                price_data = (price_data * 100).round(2)
-                                price_data.columns = [col.strip() for col in price_data.columns]
-                                price_data.index.names = [name.strip() for name in price_data.index.names]
-                                if args.md:
-                                    markdown_content.append(dataframe_to_markdown(price_data, "Price Data", is_price_data=True))
-                                else:
-                                    save_dataframe(price_data, f"{ticker}_price{suffix}.csv")
-                                saved_files.append("price")
-            except Exception as e:
-                print(f"Warning: Could not load Price data: {str(e)}")
-
+            # キャッシュフロー計算書の取得
+            process_statement(sf.load_cashflow, ticker, variant, suffix,
+                              "Cash Flow Statement", "cf", args.md, markdown_content, saved_files)
+            
+            # Derived Metricsは現プランでは利用不可
+            print("Note: Derived metrics are not available in the current plan. Please upgrade to access this feature.")
+            
+            # 株式データの抽出(損益計算書から)
+            process_shares_data(pl, ticker, suffix, args.md, markdown_content, saved_files)
+            
+            # 株価データの取得
+            process_price_data(ticker, pl, suffix, args.md, markdown_content, saved_files)
+            
             if not saved_files:
                 print(f"No data could be saved for {ticker}")
                 return
             else:
                 if args.md:
-                    # Save all tables to a single markdown file
-                    md_suffix = {'fy': '', 'q': '_q1234', 'ttm': '_ttm'}[args.command]
-                    with open(f"{ticker}{md_suffix}.md", 'w', encoding='utf-8') as f:
+                    md_suffix = suffix  # 同じsuffixを利用
+                    md_filename = f"{ticker}{md_suffix}.md"
+                    with open(md_filename, 'w', encoding='utf-8') as f:
                         f.write("\n".join(markdown_content))
-                    print(f"Successfully saved markdown file: {ticker}{md_suffix}.md")
+                    print(f"Successfully saved markdown file: {md_filename}")
                 else:
                     print(f"Successfully saved the following datasets for {ticker}: {', '.join(saved_files)}")
-
         except Exception as e:
             print(f"Error retrieving data for {ticker}: {e}")
             return
-    
     else:
         parser.print_help()
         return
+
 
 if __name__ == "__main__":
     main()
