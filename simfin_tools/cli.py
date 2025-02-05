@@ -168,6 +168,9 @@ def create_parser():
     ttm_parser = subparsers.add_parser('ttm', help='Retrieve trailing twelve months financial data')
     ttm_parser.add_argument('ticker', help='Company ticker symbol')
     
+    price_parser = subparsers.add_parser('price', help='Retrieve all available price data')
+    price_parser.add_argument('ticker', help='Company ticker symbol')
+    
     return parser
 
 
