@@ -259,6 +259,25 @@ def process_price_data(ticker, pl, suffix, markdown, md_list, saved_files):
     except Exception as e:
         print(f"Warning: Could not load Price data: {e}")
 
+def process_all_price_data(ticker, markdown, md_list, saved_files):
+    """全期間の株価データを取得・出力する関数"""
+    try:
+        with suppress_simfin_warnings():
+            prices = sf.load_shareprices(variant='daily')
+        prices = prices[prices.index.get_level_values('Ticker') == ticker]
+        if not prices.empty:
+            prices = (prices * 100).round(2)
+            if markdown:
+                md_list.append(dataframe_to_markdown(prices, "All Price Data", is_price_data=True))
+            else:
+                save_dataframe(prices, f"{ticker}_price_all.csv")
+            saved_files.append("price")
+            return True
+        return False
+    except Exception as e:
+        print(f"Warning: Could not load Price data: {e}")
+        return False
+
 
 def main():
     parser = create_parser()
@@ -337,6 +356,24 @@ def main():
         except Exception as e:
             print(f"Error retrieving data for {ticker}: {e}")
             return
+    elif args.command == 'price':
+        ticker = args.ticker
+        setup_simfin()
+        saved_files = []
+        if args.md:
+            markdown_content = [f"# {ticker} Price Data", ""]
+            if process_all_price_data(ticker, True, markdown_content, saved_files):
+                md_filename = f"{ticker}_price_all.md"
+                with open(md_filename, 'w', encoding='utf-8') as f:
+                    f.write("\n".join(markdown_content))
+                print(f"Successfully saved markdown file: {md_filename}")
+            else:
+                print(f"No price data found for {ticker}")
+        else:
+            if process_all_price_data(ticker, False, [], saved_files):
+                print(f"Successfully saved price data for {ticker}")
+            else:
+                print(f"No price data found for {ticker}")
     else:
         parser.print_help()
         return
