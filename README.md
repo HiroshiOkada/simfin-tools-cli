@@ -136,6 +136,21 @@ This will create either:
   - Sign up at [SimFin](https://simfin.com/)
   - Get your API key from your account settings
 
+### Price Data
+Retrieve all available daily price data using the new subcommand:
+```bash
+# CSV output (default)
+sfin price AAPL
+
+# Markdown output
+sfin --md price AAPL
+```
+This will create either:
+- A CSV file: 
+  - `AAPL_price_all.csv` – All daily price data
+- A Markdown file:
+  - `AAPL_price_all.md` – All price data in Markdown tables
+
 ## Cache Directory
 
 The tool uses a local cache directory (`simfin_data/`) to store downloaded datasets. This:
