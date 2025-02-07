@@ -177,7 +177,8 @@ def create_parser():
 def setup_simfin():
     """Set API key and data directory for simfin."""
     sf.set_api_key(os.environ["SIMFIN_API_KEY"])
-    sf.set_data_dir('simfin_data')
+    data_dir = os.environ.get("SIMFIN_DATA", "simfin_data")
+    sf.set_data_dir(data_dir)
 
 
 def process_statement(load_func, ticker, variant, suffix, title, file_tag, markdown, md_list, saved_files):

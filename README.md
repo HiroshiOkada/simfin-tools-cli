@@ -135,6 +135,7 @@ This will create either:
 - `SIMFIN_API_KEY`: Your SimFin API key (required)
   - Sign up at [SimFin](https://simfin.com/)
   - Get your API key from your account settings
+- `SIMFIN_DATA`: Path to the directory where SimFin data is stored (optional, defaults to `simfin_data`)
 
 ### Price Data
 Retrieve all available daily price data using the new subcommand:
