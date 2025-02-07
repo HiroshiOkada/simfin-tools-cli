@@ -3,7 +3,7 @@ from simfin_tools import __version__
 
 setup(
     name="simfin-tools",
-    version="0.1.1",
+    version="0.1.2",
     description="A command line tool to retrieve financial data using simfin",
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",

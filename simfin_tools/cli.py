@@ -133,8 +133,12 @@ def dataframe_to_markdown(df, title, is_price_data=False):
 
 def save_dataframe(df, filename, index=True):
     """Helper function to save dataframes with consistent formatting"""
+    output_dir = os.environ.get("SIMFIN_OUTPUT_DIR", ".")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    filepath = os.path.join(output_dir, filename)
     df.to_csv(
-        filename,
+        filepath,
         sep=',',
         index=index,
         float_format='%.2f',
@@ -271,7 +275,16 @@ def process_all_price_data(ticker, markdown, md_list, saved_files):
             if markdown:
                 md_list.append(dataframe_to_markdown(prices, "All Price Data", is_price_data=True))
             else:
-                save_dataframe(prices, f"{ticker}_price_all.csv")
+                output_dir = os.environ.get("SIMFIN_OUTPUT_DIR", ".")
+                filepath = os.path.join(output_dir, f"{ticker}_price_all.csv")
+                prices.to_csv(filepath,
+                    sep=',',
+                    index=True,
+                    float_format='%.2f',
+                    encoding='utf-8',
+                    quoting=csv.QUOTE_NONNUMERIC,
+                    doublequote=True
+                )
             saved_files.append("price")
             return True
         return False

@@ -136,6 +136,7 @@ This will create either:
   - Sign up at [SimFin](https://simfin.com/)
   - Get your API key from your account settings
 - `SIMFIN_DATA`: Path to the directory where SimFin data is stored (optional, defaults to `simfin_data`)
+- `SIMFIN_OUTPUT_DIR`: Path to the directory where the output files (csv, md) will be stored (optional, defaults to current directory)
 
 ### Price Data
 Retrieve all available daily price data using the new subcommand:
@@ -165,3 +166,35 @@ The cache is automatically:
 - Reused when the data is still current
 
 You can safely delete the `simfin_data/` directory if you want to force a fresh download of all datasets.
+
+## Development
+
+1. Create a new branch:
+```bash
+git checkout -b your-branch-name
+```
+
+2. Create a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+2. Install the package in editable mode:
+```bash
+pip install -e .
+```
+
+3. Make changes to the code.
+
+4. Commit the changes:
+```bash
+git add .
+git commit -m "Your commit message"
+```
+
+5. Merge the changes into the main branch:
+```bash
+git checkout main
+git merge your-branch-name
+```
